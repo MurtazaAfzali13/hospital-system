@@ -1,0 +1,105 @@
+{
+  "common": { "direction": "ltr" },
+  "login": {
+    "title": "Login",
+    "subtitle": "Enter your email and password",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Login",
+    "noAccount": "Don't have an account?",
+    "register": "Register"
+  },
+  "register": {
+    "title": "Create Account",
+    "subtitle": "Fill your details to create a patient account",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Register",
+    "alreadyHaveAccount": "Already have an account?",
+    "login": "Login"
+  },
+   "common_hero": {
+    "direction": "ltr",
+    "emergency": "Emergency",
+    "emergencyContact": "(123) 456-7890",
+    "emergencyService": "24/7 Emergency Service",
+    "support": "Support",
+    "scroll": "Scroll",
+    "contact": "Contact",
+    "learnMore": "Learn More",
+    "viewDepartments": "View Departments",
+    "viewServices": "View Services",
+    "bookAppointment": "Book Appointment",
+    "meetOurTeam": "Meet Our Team",
+    "emergencyContactBtn": "Emergency Contact",
+    "expertDoctors": "Expert Doctors",
+    "patientsTreated": "Patients Treated",
+    "successRate": "Success Rate"
+  },
+  "hero": {
+    "slide1": {
+      "subtitle": "World-Class Medical Excellence",
+      "title": "Advanced Healthcare Solutions",
+      "description": "Providing exceptional patient care with cutting-edge technology and compassionate professionals."
+    },
+    "slide2": {
+      "subtitle": "Trusted Medical Professionals",
+      "title": "Expert Doctors & Specialists",
+      "description": "Our board-certified specialists are dedicated to your health and well-being with personalized care."
+    },
+    "slide3": {
+      "subtitle": "Always Here When You Need Us",
+      "title": "24/7 Emergency Care",
+      "description": "Our emergency department is open round the clock with state-of-the-art facilities and rapid response."
+    }
+  },
+  "navbar": {
+    "hospitalName": "Advanced Hospital",
+    "leadingCenter": "Leading Medical Center",
+    "home": "Home",
+    "doctors": "Doctors",
+    "departments": "Departments",
+    "services": "Services",
+    "login": "Login",
+    "signUp": "Sign Up",
+    "profile": "Profile",
+    "logout": "Logout",
+    "account": "Account"
+  },
+   "footer": {
+    "description": "Leading medical center providing world-class healthcare services with cutting-edge technology and compassionate care.",
+    "quickLinks": "Quick Links",
+    "medicalServices": "Medical Services",
+    "contactInfo": "Contact Information",
+    "home": "Home",
+    "doctors": "Doctors",
+    "departments": "Departments",
+    "services": "Services",
+    "appointments": "Appointments",
+    "emergencyCare": "Emergency Care",
+    "cardiology": "Cardiology",
+    "neurology": "Neurology",
+    "orthopedics": "Orthopedics",
+    "pediatrics": "Pediatrics",
+    "radiology": "Radiology",
+    "address": "123 Medical Street, Health District, City, Country",
+    "phone": "+1 (555) 123-4567",
+    "email": "info@advancedhospital.com",
+    "emergencyPhone": "Emergency: (123) 456-7890",
+    "workingHours": "24/7 Emergency Services",
+    "newsletter": "Subscribe to Our Newsletter",
+    "newsletterDescription": "Stay updated with the latest healthcare news, services, and health tips.",
+    "emailPlaceholder": "Enter your email address",
+    "subscribe": "Subscribe",
+    "allRightsReserved": "All rights reserved.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "sitemap": "Sitemap",
+    "contactUs": "Contact Us"
+  },
+  "search":{
+  "search_doctor_placeholder": "Search doctor name..."
+}
+}

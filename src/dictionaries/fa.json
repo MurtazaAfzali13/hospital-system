@@ -1,0 +1,106 @@
+{
+  "common": { "direction": "rtl" },
+  "login": {
+    "title": "ورود به حساب",
+    "subtitle": "ایمیل و رمز عبور خود را وارد کنید",
+    "email": "ایمیل",
+    "password": "رمز عبور",
+    "submit": "ورود",
+    "noAccount": "حساب ندارید؟",
+    "register": "ثبت نام"
+  },
+  "register": {
+    "title": "ثبت نام بیمار",
+    "subtitle": "اطلاعات خود را وارد کنید تا حساب کاربری ساخته شود",
+    "firstName": "نام",
+    "lastName": "نام خانوادگی",
+    "email": "ایمیل",
+    "password": "رمز عبور",
+    "submit": "ثبت نام",
+    "alreadyHaveAccount": "حساب دارید؟",
+    "login": "ورود"
+  },
+   "common_hero": {
+    "direction": "rtl",
+    "emergency": "اورژانس",
+    "emergencyContact": "۱۲۳-۴۵۶-۷۸۹۰",
+    "emergencyService": "خدمات اورژانسی ۲۴/۷",
+    "support": "پشتیبانی",
+    "scroll": "اسکرول",
+    "contact": "تماس",
+    "learnMore": "اطلاعات بیشتر",
+    "viewDepartments": "مشاهده بخش‌ها",
+    "viewServices": "مشاهده خدمات",
+    "bookAppointment": "رزرو نوبت",
+    "meetOurTeam": "آشنایی با تیم ما",
+    "emergencyContactBtn": "تماس اضطراری",
+    "expertDoctors": "پزشک متخصص",
+    "patientsTreated": "بیمار درمان شده",
+    "successRate": "میزان موفقیت"
+  },
+  "hero": {
+    "slide1": {
+      "subtitle": "تعالی پزشکی در سطح جهانی",
+      "title": "راهکارهای پیشرفته مراقبت‌های بهداشتی",
+      "description": "ارائه مراقبت‌های استثنایی به بیماران با فناوری پیشرفته و متخصصان دلسوز."
+    },
+    "slide2": {
+      "subtitle": "پزشکان معتمد و حرفه‌ای",
+      "title": "پزشکان و متخصصان خبره",
+      "description": "متخصصان دارای گواهی هیئت مدیره ما با مراقبت‌های شخصی شده، متعهد به سلامتی و رفاه شما هستند."
+    },
+    "slide3": {
+      "subtitle": "همیشه در کنار شما در زمان نیاز",
+      "title": "مراقبت اورژانسی ۲۴/۷",
+      "description": "بخش اورژانس ما به صورت شبانه‌روزی با امکانات پیشرفته و پاسخگویی سریع فعال است."
+    }
+  },
+  "navbar": {
+    "hospitalName": "بیمارستان پیشرفته",
+    "leadingCenter": "مرکز درمانی برتر",
+    "home": "صفحه اصلی",
+    "doctors": "پزشکان",
+    "departments": "بخش ها",
+    "services": "خدمات",
+    "login": "ورود",
+    "signUp": "ثبت نام",
+    "profile": "پروفایل",
+    "logout": "خروج",
+    "account": "حساب کاربری"
+  },
+   "footer": {
+    "description": "مرکز پزشکی پیشرو که خدمات بهداشتی در سطح جهانی را با فناوری پیشرفته و مراقبت‌های دلسوزانه ارائه می‌دهد.",
+    "quickLinks": "لینک‌های سریع",
+    "medicalServices": "خدمات پزشکی",
+    "contactInfo": "اطلاعات تماس",
+    "home": "صفحه اصلی",
+    "doctors": "پزشکان",
+    "departments": "بخش‌ها",
+    "services": "خدمات",
+    "appointments": "نوبت‌گیری",
+    "emergencyCare": "مراقبت اورژانسی",
+    "cardiology": "قلب و عروق",
+    "neurology": "عصب شناسی",
+    "orthopedics": "ارتوپدی",
+    "pediatrics": "کودکان",
+    "radiology": "رادیولوژی",
+    "address": "خیابان پزشکی ۱۲۳، منطقه سلامت، شهر، کشور",
+    "phone": "۰۹۱۲۳۴۵۶۷۸۹+",
+    "email": "info@advancedhospital.com",
+    "emergencyPhone": "اورژانس: ۱۲۳-۴۵۶-۷۸۹۰",
+    "workingHours": "خدمات اورژانس ۲۴/۷",
+    "newsletter": "اشتراک در خبرنامه ما",
+    "newsletterDescription": "با آخرین اخبار بهداشتی، خدمات و نکات سلامتی به‌روز بمانید.",
+    "emailPlaceholder": "آدرس ایمیل خود را وارد کنید",
+    "subscribe": "اشتراک",
+    "allRightsReserved": "تمامی حقوق محفوظ است.",
+    "privacyPolicy": "سیاست حفظ حریم خصوصی",
+    "termsOfService": "شرایط خدمات",
+    "sitemap": "نقشه سایت",
+    "contactUs": "تماس با ما"
+  },
+  "search":{
+  "search_doctor_placeholder": "جستجوی نام پزشک..."
+}
+  
+}
