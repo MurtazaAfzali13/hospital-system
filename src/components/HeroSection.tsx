@@ -74,41 +74,6 @@ const HeroSection = () => {
         }));
     }, [t]);
 
-    // Stats cards با fallback
-    const stats = useMemo(() => {
-        const defaultStats = [
-            {
-                number: "200+",
-                label: "Expert Doctors",
-                icon: "👨‍⚕️",
-                color: "from-cyan-500 to-blue-500"
-            },
-            {
-                number: "50K+",
-                label: "Patients Treated",
-                icon: "❤️",
-                color: "from-emerald-500 to-green-500"
-            },
-            {
-                number: "24/7",
-                label: "Emergency Service",
-                icon: "🚑",
-                color: "from-amber-500 to-orange-500"
-            },
-            {
-                number: "98%",
-                label: "Success Rate",
-                icon: "⭐",
-                color: "from-purple-500 to-pink-500"
-            }
-        ];
-
-        return defaultStats.map((stat, index) => ({
-            ...stat,
-            label: t(`common_hero.${index === 0 ? 'expertDoctors' : index === 1 ? 'patientsTreated' : index === 2 ? 'emergencyService' : 'successRate'}`) || stat.label
-        }));
-    }, [t]);
-
     // Floating dots با مقادیر ثابت (seed ثابت برای جلوگیری از hydration error)
     const floatingDots = useMemo(() => {
         const random = seededRandom(12345);
@@ -143,7 +108,7 @@ const HeroSection = () => {
     return (
         <section
             ref={heroRef}
-            className="relative h-screen overflow-hidden pb-10"
+            className="relative h-screen overflow-hidden"
             dir={isRtl ? 'rtl' : 'ltr'}
         >
             {/* Emergency Quick Access */}
@@ -151,18 +116,18 @@ const HeroSection = () => {
                 initial={{ y: -50 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30"
+                className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 w-full px-4"
             >
                 <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleEmergencyClick}
-                    className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-full shadow-lg hover:shadow-red-500/25 transition-all duration-300"
+                    className="flex items-center justify-center space-x-2 px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-full shadow-lg hover:shadow-red-500/25 transition-all duration-300 w-full max-w-sm mx-auto"
                 >
-                    <svg className="h-5 w-5 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2L2 7V17L12 22L22 17V7L12 2ZM12 4.5L18.5 8.25V15.75L12 19.5L5.5 15.75V8.25L12 4.5ZM12 7L8 11H11V16H13V11H16L12 7Z" />
                     </svg>
-                    <span className="font-semibold">{emergencyLabel}</span>
+                    <span className="font-semibold text-sm sm:text-base truncate">{emergencyLabel}</span>
                 </motion.button>
             </motion.div>
 
@@ -190,21 +155,21 @@ const HeroSection = () => {
             {/* Animated Medical Elements */}
             <div className="absolute inset-0 overflow-hidden">
                 <motion.div
-                    className={`absolute top-1/4 ${isRtl ? 'right-10' : 'left-10'} text-white/20`}
+                    className={`absolute top-1/4 ${isRtl ? 'right-10' : 'left-10'} text-white/20 hidden sm:block`}
                     animate={{ y: [0, -20, 0] }}
                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
                     <MedicalIcon size={60} />
                 </motion.div>
                 <motion.div
-                    className={`absolute bottom-1/3 ${isRtl ? 'left-20' : 'right-20'} text-white/15`}
+                    className={`absolute bottom-1/3 ${isRtl ? 'left-20' : 'right-20'} text-white/15 hidden lg:block`}
                     animate={{ y: [0, 20, 0] }}
                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 >
                     <HeartIcon size={80} />
                 </motion.div>
                 <motion.div
-                    className={`absolute top-40 ${isRtl ? 'left-1/4' : 'right-1/4'} text-white/10`}
+                    className={`absolute top-40 ${isRtl ? 'left-1/4' : 'right-1/4'} text-white/10 hidden md:block`}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 >
@@ -213,96 +178,106 @@ const HeroSection = () => {
             </div>
 
             {/* Main Content Container */}
-            <div className="relative z-10 h-full">
-                {/* Text Content - Center */}
-                <div className="flex flex-col justify-center h-3/4 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-                    <div className="max-w-3xl">
-                        {slides.map((slide, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 50 }}
-                                animate={{
-                                    opacity: currentSlide === index ? 1 : 0,
-                                    y: currentSlide === index ? 0 : 50
-                                }}
-                                transition={{ duration: 0.8, delay: 0.2 }}
-                                className="absolute"
-                            >
-                                <motion.span
-                                    initial={{ width: 0 }}
-                                    animate={{ width: currentSlide === index ? 100 : 0 }}
-                                    transition={{ duration: 1, delay: 0.5 }}
-                                    className={`block h-1 bg-gradient-to-r from-cyan-400 to-emerald-400 mb-6 rounded-full ${isRtl ? 'mr-0' : 'ml-0'
-                                        }`}
-                                />
+            <div className="relative z-10 h-full flex flex-col justify-between">
+                {/* Text Content */}
+                <div className="flex-1 flex items-center px-4 sm:px-6 lg:px-8">
+                    <div className="w-full max-w-7xl mx-auto">
+                        <div className="max-w-3xl">
+                            {slides.map((slide, index) => (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{
+                                        opacity: currentSlide === index ? 1 : 0,
+                                        y: currentSlide === index ? 0 : 30
+                                    }}
+                                    transition={{ duration: 0.8, delay: 0.2 }}
+                                    className={`absolute ${isRtl ? 'text-right' : 'text-left'}`}
+                                >
+                                    <div className="space-y-4 sm:space-y-6">
+                                        {/* Animated underline */}
+                                        <motion.span
+                                            initial={{ width: 0 }}
+                                            animate={{ width: currentSlide === index ? '100%' : 0 }}
+                                            transition={{ duration: 1, delay: 0.5 }}
+                                            className={`block h-1 bg-gradient-to-r from-cyan-400 to-emerald-400 mb-4 rounded-full ${isRtl ? 'ml-auto' : 'mr-auto'}`}
+                                            style={{ maxWidth: '200px' }}
+                                        />
 
-                                <h2 className="text-lg sm:text-xl font-semibold text-cyan-300 mb-2 tracking-wider">
-                                    {slide.subtitle}
-                                </h2>
+                                        {/* Subtitle */}
+                                        <h2 className="text-sm sm:text-base md:text-lg font-semibold text-cyan-300 mb-2 tracking-wider">
+                                            {slide.subtitle}
+                                        </h2>
 
-                                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-                                    {slide.title}
-                                </h1>
+                                        {/* Main Title */}
+                                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 leading-tight">
+                                            {slide.title}
+                                        </h1>
 
-                                <p className="text-lg sm:text-xl text-gray-200 mb-8 max-w-2xl leading-relaxed">
-                                    {slide.description}
-                                </p>
+                                        {/* Description */}
+                                        <p className="text-sm sm:text-base md:text-lg text-gray-200 mb-6 max-w-2xl leading-relaxed">
+                                            {slide.description}
+                                        </p>
 
-                                <div className={`flex flex-col sm:flex-row gap-4 ${isRtl ? 'sm:flex-row-reverse' : ''}`}>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-semibold rounded-full shadow-lg hover:shadow-cyan-500/25 transition-all duration-300"
-                                    >
-                                        {slide.cta}
-                                    </motion.button>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="px-8 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300"
-                                    >
-                                        {slide.secondaryCta}
-                                    </motion.button>
-                                </div>
-                            </motion.div>
-                        ))}
+                                        {/* Buttons */}
+                                        <div className={`flex flex-col sm:flex-row gap-3 ${isRtl ? 'sm:flex-row-reverse' : ''}`}>
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-semibold rounded-full shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 text-sm sm:text-base"
+                                            >
+                                                {slide.cta}
+                                            </motion.button>
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300 text-sm sm:text-base"
+                                            >
+                                                {slide.secondaryCta}
+                                            </motion.button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-             
-
-                {/* Slide Dots */}
-                <div className={`absolute bottom-32 ${isRtl ? 'right-1/2 transform translate-x-1/2' : 'left-1/2 transform -translate-x-1/2'
-                    } flex space-x-3 z-20`}>
-                    {slides.map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => handleDotClick(index)}
-                            className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSlide === index ? 'bg-cyan-400 w-10' : 'bg-white/50'
-                                }`}
-                            aria-label={`Go to slide ${index + 1}`}
-                        />
-                    ))}
+                {/* Slide Dots - موقعیت اصلاح شده */}
+                <div className="px-4 pb-8 sm:pb-12 md:pb-16">
+                    <div className={`flex justify-center space-x-3 ${isRtl ? 'space-x-reverse' : ''}`}>
+                        {slides.map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => handleDotClick(index)}
+                                className={`h-2 rounded-full transition-all duration-300 ${currentSlide === index
+                                        ? 'bg-cyan-400 w-8 sm:w-10'
+                                        : 'bg-white/50 w-3'
+                                    }`}
+                                aria-label={`Go to slide ${index + 1}`}
+                            />
+                        ))}
+                    </div>
                 </div>
-
-                {/* Scroll Indicator */}
-                {isClient && (
-                    <motion.div
-                        animate={{ y: [0, 10, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        className={`absolute bottom-8 ${isRtl ? 'left-8' : 'right-8'} hidden lg:block`}
-                    >
-                        <div className="text-white/60 flex flex-col items-center">
-                            <span className="text-sm mb-2">
-                                {scrollText}
-                            </span>
-                            <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-                                <div className="w-1 h-3 bg-cyan-400 rounded-full mt-2" />
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
             </div>
+
+            {/* Scroll Indicator */}
+            {isClient && (
+                <motion.div
+                    animate={{ y: [0, 10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className={`absolute bottom-8 ${isRtl ? 'left-8' : 'right-8'} hidden lg:block`}
+                >
+                    <div className="text-white/60 flex flex-col items-center">
+                        <span className="text-sm mb-2">
+                            {scrollText}
+                        </span>
+                        <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
+                            <div className="w-1 h-3 bg-cyan-400 rounded-full mt-2" />
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Floating Elements Background - فقط در کلاینت */}
             {isClient && (
@@ -310,7 +285,7 @@ const HeroSection = () => {
                     {floatingDots.map((dot) => (
                         <motion.div
                             key={dot.id}
-                            className="absolute w-2 h-2 bg-cyan-400/30 rounded-full"
+                            className="absolute w-2 h-2 bg-cyan-400/30 rounded-full hidden sm:block"
                             style={{
                                 left: `${dot.left}%`,
                                 top: `${dot.top}%`,
@@ -331,8 +306,6 @@ const HeroSection = () => {
         </section>
     );
 };
-
-
 
 const MedicalIcon = ({ size = 24 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
