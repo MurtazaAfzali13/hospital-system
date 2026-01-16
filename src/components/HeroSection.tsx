@@ -28,15 +28,15 @@ const HeroSection = () => {
 
     useEffect(() => {
         setIsClient(true);
-        
+
         // بررسی سایز صفحه برای تشخیص موبایل/دسکتاپ
         const checkMobile = () => {
             setIsMobile(window.innerWidth < 768);
         };
-        
+
         checkMobile();
         window.addEventListener('resize', checkMobile);
-        
+
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
@@ -158,18 +158,21 @@ const HeroSection = () => {
                         className="absolute inset-0 bg-cover bg-center"
                         style={{
                             backgroundImage: `url(${slide.image})`,
+                            willChange: 'opacity'
                         }}
-                        initial={{ opacity: 0 }}
+                        initial={false}
                         animate={{
                             opacity: currentSlide === index ? 1 : 0,
-                            scale: currentSlide === index ? 1 : 1.1
                         }}
-                        transition={{ duration: 1.2, ease: "easeInOut" }}
+                        transition={{
+                            opacity: { duration: 0.8, ease: "easeInOut" }
+                        }}
                     >
                         <div className={`absolute inset-0 bg-gradient-to-br ${slide.color}`} />
                     </motion.div>
                 ))}
             </div>
+
 
             {/* Animated Medical Elements */}
             <div className="absolute inset-0 overflow-hidden">
@@ -270,8 +273,8 @@ const HeroSection = () => {
                                 key={index}
                                 onClick={() => handleDotClick(index)}
                                 className={`h-2 rounded-full transition-all duration-300 ${currentSlide === index
-                                        ? 'bg-cyan-400 w-8 sm:w-10'
-                                        : 'bg-white/50 w-3'
+                                    ? 'bg-cyan-400 w-8 sm:w-10'
+                                    : 'bg-white/50 w-3'
                                     }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
