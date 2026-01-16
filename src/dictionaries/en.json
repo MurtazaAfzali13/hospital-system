@@ -60,6 +60,7 @@
     "leadingCenter": "Leading Medical Center",
     "home": "Home",
     "doctors": "Doctors",
+    "about":"About us",
     "departments": "Departments",
     "services": "Services",
     "login": "Login",
@@ -102,5 +103,76 @@
   },
   "search":{
   "search_doctor_placeholder": "Search doctor name..."
-}
+},
+ "about": {
+    "title": "About Us",
+    "headline": {
+      "part1": "Specialized Center",
+      "part2": "Shafakhaneh"
+    },
+    "description": "With over 15 years of experience in providing modern medical services, we are committed to your health and well-being. A team of the best specialists using the most advanced medical equipment is at your service.",
+    "experienceYears": "Years of Experience",
+    "teamReady": "Our team of specialists is ready to serve you",
+    "support": {
+      "title": "24/7 Support",
+      "description": "Our team is always ready to answer your questions"
+    },
+    "whoWeAre": "Who we are and what we do?",
+    "content1": "Shafakhaneh is a specialized medical center that was established in 2005 with the aim of providing modern and high-quality medical services. We believe that every individual deserves the best healthcare.",
+    "content2": "By combining advanced technology, specialized doctors, and a human-centered approach, we have created a safe and peaceful environment for treatment and patient recovery.",
+    "learnMore": "Learn More",
+    "mission": {
+      "title": "We are committed to your health",
+      "ourMission": "Our Mission",
+      "ourMissionDesc": "Providing quality, accessible, and affordable medical services to all members of society",
+      "ourVision": "Our Vision",
+      "ourVisionDesc": "Becoming the leading medical center in the region by 2026",
+      "ourValues": "Our Values",
+      "ourValuesDesc": "Honesty, quality, empathy, and commitment to patients are at the heart of our activities",
+      "socialCommitment": "Social Commitment",
+      "socialCommitmentDesc": "Participation in improving community health and providing free services to those in need"
+    },
+    "stats": {
+      "experts": "50+",
+      "expertsLabel": "Expert Specialists",
+      "patients": "200",
+      "patientsLabel": "Daily Patients",
+      "satisfaction": "98%",
+      "satisfactionLabel": "Patient Satisfaction",
+      "emergency": "24/7",
+      "emergencyLabel": "Emergency"
+    },
+    "values": {
+      "title": "Our Values",
+      "safety": "Safety and Quality",
+      "safetyDesc": "We maintain the highest standards of safety and quality in all services",
+      "care": "Compassionate Care",
+      "careDesc": "With compassion and empathy, we provide the best care for our patients",
+      "excellence": "Medical Excellence",
+      "excellenceDesc": "Using state-of-the-art technology and top doctors, we pursue excellence",
+      "patientFocus": "Patient Focus",
+      "patientFocusDesc": "The patient is at the center of all our decisions and services"
+    },
+    "timeline": {
+      "title": "Our History",
+      "year1": "2005",
+      "title1": "Foundation of Shafakhaneh",
+      "desc1": "Beginning operations with the goal of providing modern medical services",
+      "year2": "2010",
+      "title2": "Equipped with Modern Technology",
+      "desc2": "Installation and commissioning of the first MRI device in the region",
+      "year3": "2015",
+      "title3": "Emergency Department Opening",
+      "desc3": "Launch of a 24-hour emergency department with complete equipment",
+      "year4": "2023",
+      "title4": "Achieving International Standards",
+      "desc4": "Receiving ISO certification for quality of medical services"
+    },
+    "cta": {
+      "title": "Ready to serve you",
+      "description": "Contact us for an appointment or free consultation",
+      "phone": "Contact Us: 021-12345678",
+      "appointment": "Book Appointment Online"
+    }
+  }
 }

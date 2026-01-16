@@ -18,6 +18,7 @@ function seededRandom(seed: number): () => number {
 const HeroSection = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isClient, setIsClient] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const heroRef = useRef<HTMLDivElement>(null);
     const { lang, t } = useContext(I18nContext);
     const pathname = usePathname();
@@ -27,6 +28,16 @@ const HeroSection = () => {
 
     useEffect(() => {
         setIsClient(true);
+        
+        // بررسی سایز صفحه برای تشخیص موبایل/دسکتاپ
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     // Slides data با fallback برای زمانی که ترجمه موجود نیست
@@ -38,7 +49,11 @@ const HeroSection = () => {
                 description: "Providing exceptional patient care with cutting-edge technology and compassionate professionals.",
                 cta: "Book Appointment",
                 secondaryCta: "Learn More",
-                color: "from-blue-900/70 to-teal-800/60"
+                color: "from-blue-900/70 to-teal-800/60",
+                images: {
+                    desktop: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=2053&auto=format&fit=crop",
+                    mobile: "/images/hero/hero1.jpg"
+                }
             },
             {
                 title: "Expert Doctors & Specialists",
@@ -46,7 +61,11 @@ const HeroSection = () => {
                 description: "Our board-certified specialists are dedicated to your health and well-being with personalized care.",
                 cta: "Meet Our Team",
                 secondaryCta: "View Departments",
-                color: "from-emerald-900/70 to-cyan-800/60"
+                color: "from-emerald-900/70 to-cyan-800/60",
+                images: {
+                    desktop: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?q=80&w=1932&auto=format&fit=crop",
+                    mobile: "/images/hero/hero2.jpg"
+                }
             },
             {
                 title: "24/7 Emergency Care",
@@ -54,7 +73,11 @@ const HeroSection = () => {
                 description: "Our emergency department is open round the clock with state-of-the-art facilities and rapid response.",
                 cta: "Emergency Contact",
                 secondaryCta: "View Services",
-                color: "from-rose-900/70 to-indigo-800/60"
+                color: "from-rose-900/70 to-indigo-800/60",
+                images: {
+                    desktop: "https://images.unsplash.com/photo-1504439468489-c8920d796a29?q=80&w=2070&auto=format&fit=crop",
+                    mobile: "/images/hero/hero4.jpg"
+                }
             }
         ];
 
@@ -65,14 +88,10 @@ const HeroSection = () => {
             description: t(`hero.slide${index + 1}.description`) || slide.description,
             cta: t(`common_hero.${index === 0 ? 'bookAppointment' : index === 1 ? 'meetOurTeam' : 'emergencyContactBtn'}`) || slide.cta,
             secondaryCta: t(`common_hero.${index === 0 ? 'learnMore' : index === 1 ? 'viewDepartments' : 'viewServices'}`) || slide.secondaryCta,
-            image: [
-                "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=2053&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1551601651-2a8555f1a136?q=80&w=1932&auto=format&fit=crop",
-                "https://images.unsplash.com/photo-1504439468489-c8920d796a29?q=80&w=2070&auto=format&fit=crop"
-            ][index]
-
+            // انتخاب عکس بر اساس دستگاه
+            image: isClient && isMobile ? slide.images.mobile : slide.images.desktop
         }));
-    }, [t]);
+    }, [t, isClient, isMobile]);
 
     // Floating dots با مقادیر ثابت (seed ثابت برای جلوگیری از hydration error)
     const floatingDots = useMemo(() => {

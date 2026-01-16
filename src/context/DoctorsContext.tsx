@@ -67,8 +67,14 @@ export const DoctorsProvider = ({ children }: { children: React.ReactNode }) => 
     fetchDoctors()
   }, [])
 
+  // get doctor by ID
+  const getDoctorById = (id: string) =>
+    state.doctors.find(
+      (doctor) => String(doctor.id) === String(id)
+    )
+
   return (
-    <DoctorsContext.Provider value={{ state, dispatch }}>
+    <DoctorsContext.Provider value={{ state, dispatch,getDoctorById }}>
       {children}
     </DoctorsContext.Provider>
   )

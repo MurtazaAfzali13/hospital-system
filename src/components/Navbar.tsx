@@ -67,6 +67,7 @@ export default function Navbar() {
     { name: t('navbar.departments'), href: `/${lang}/departments` },
     { name: t('navbar.services'), href: `/${lang}/services` },
     { name: t('common_hero.contact'), href: `/${lang}/contact` },
+    { name: t('navbar.about'), href: `/${lang}/about` },
   ]
 
   return (
