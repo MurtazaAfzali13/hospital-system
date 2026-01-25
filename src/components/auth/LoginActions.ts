@@ -33,7 +33,9 @@ export async function loginAction(
 
   const { email, password } = parsed.data
 
-  const supabase = createServerSupabaseClient()
+  // ✅ FIX
+  const supabase = await createServerSupabaseClient()
+
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,

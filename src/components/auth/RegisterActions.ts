@@ -1,18 +1,18 @@
 'use server'
 
 import { createServerSupabaseClient } from '@/utils/supabase/server'
-import {z} from "zod"
+import { z } from 'zod'
 
 export type RegisterState = {
   error?: string
   success?: string
 }
 
-const RegisterSchema=z.object({
-  email:z.string().email(),
-  password:z.string().min(6),
-  firstName:z.string().trim().min(1),
-  lastName:z.string().trim().min(1)
+const RegisterSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().trim().min(1),
+  lastName: z.string().trim().min(1),
 })
 
 export async function registerAction(
@@ -20,24 +20,24 @@ export async function registerAction(
   formData: FormData
 ): Promise<RegisterState> {
 
-  const rawData={
-      email: formData.get('email'),
-     password : formData.get('password'),
-    firstName : formData.get('firstName'),
-    lastName : formData.get('lastName'),
+  const rawData = {
+    email: formData.get('email'),
+    password: formData.get('password'),
+    firstName: formData.get('firstName'),
+    lastName: formData.get('lastName'),
   }
 
- 
-   const parsed = RegisterSchema.safeParse(rawData);
-   if(!parsed.success){
+  const parsed = RegisterSchema.safeParse(rawData)
+  if (!parsed.success) {
     return {
-      error:parsed.error.issues[0].message
+      error: parsed.error.issues[0].message,
     }
-   }
-  
-   const {email,password,firstName,lastName}=parsed.data;
+  }
 
-  const supabase = createServerSupabaseClient()
+  const { email, password, firstName, lastName } = parsed.data
+
+  // ✅ FIX
+  const supabase = await createServerSupabaseClient()
 
   const { error } = await supabase.auth.signUp({
     email,

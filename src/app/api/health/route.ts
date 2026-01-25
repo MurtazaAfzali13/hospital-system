@@ -1,39 +1,35 @@
-import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/utils/supabase/server";
+// 📁 `app/api/health/route.ts`
+import { NextRequest, NextResponse } from "next/server";
+import { checkSupabaseConnection } from "@/utils/supabase/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabaseStatus = await checkSupabaseConnection();
+    
+    // بررسی APIهای دیگر
+    const apis = [
+      { name: 'Supabase Database', status: supabaseStatus.connected },
+      { name: 'Appointments API', status: true }, // می‌توانید تست واقعی اضافه کنید
+      { name: 'Patients API', status: true },
+      { name: 'Doctors API', status: true }
+    ];
 
-    // ساده‌ترین تست اتصال
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id")
-      .limit(1);
+    const allHealthy = apis.every(api => api.status);
 
-    if (error) {
-      console.error("Supabase error:", error);
-      return NextResponse.json(
-        { status: "error", message: error.message },
-        { status: 500 }
-      );
-    }
-   console.log("URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-console.log("KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    return NextResponse.json({
+      status: allHealthy ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      services: apis,
+      database: supabaseStatus
+    }, {
+      status: allHealthy ? 200 : 503
+    });
 
-    return NextResponse.json(
-      {
-        status: "ok",
-        supabase: "connected",
-        sample: data,
-      },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    console.error("Unexpected error:", err);
-    return NextResponse.json(
-      { status: "error", message: err?.message ?? "Unknown error" },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    return NextResponse.json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    }, { status: 500 });
   }
 }

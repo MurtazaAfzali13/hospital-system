@@ -6,12 +6,31 @@ import Image from 'next/image'
 import { useDoctors } from '@/context/DoctorsContext'
 import DoctorSocialIcons from "../../../../components/doctors/DoctorSocialIcons"
 import Link from 'next/link'
+import { useEffect, useState, useContext } from 'react'
+import { I18nContext } from '@/context/I18nContext'
+
+// کامپوننت BookingSection که ساختیم را import کن
+import ModernBookingSection from '@/components/booking/ModernBookingSection'
 
 export default function DoctorDetailsPage() {
+    const { lang } = useContext(I18nContext)
     const { id } = useParams()
     const { getDoctorById, state } = useDoctors()
-
     const doctor = getDoctorById(id as string)
+
+    const [schedules, setSchedules] = useState<any[]>([])
+
+    useEffect(() => {
+        if (!doctor?.id) return
+
+        const fetchSchedules = async () => {
+            const res = await fetch(`/api/doctors/${doctor.id}/schedules`)
+            const data = await res.json()
+            setSchedules(data)
+        }
+
+        fetchSchedules()
+    }, [doctor?.id])
 
     if (state.loading || !doctor) {
         return (
@@ -22,13 +41,13 @@ export default function DoctorDetailsPage() {
     }
 
     return (
-        <section className="relative overflow-hidden py-28 bg-[oklch(20.8%_0.042_265.755)]">
+        <section className="relative overflow-hidden py-28 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
             {/* Background gradients */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[oklch(17%_0.038_268)] via-[oklch(20.8%_0.042_265.755)] to-[oklch(24%_0.045_262)]" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
 
             {/* Glow accents */}
-            <div className="pointer-events-none absolute -top-60 -left-60 h-[520px] w-[520px] rounded-full bg-[oklch(30%_0.06_260)] blur-[160px] opacity-30" />
-            <div className="pointer-events-none absolute bottom-0 -right-60 h-[480px] w-[480px] rounded-full bg-[oklch(28%_0.055_275)] blur-[160px] opacity-25" />
+            <div className="pointer-events-none absolute -top-60 -left-60 h-[520px] w-[520px] rounded-full bg-cyan-500/20 blur-[160px] opacity-30" />
+            <div className="pointer-events-none absolute bottom-0 -right-60 h-[480px] w-[480px] rounded-full bg-emerald-500/20 blur-[160px] opacity-25" />
 
             {/* Content */}
             <motion.div
@@ -46,7 +65,7 @@ export default function DoctorDetailsPage() {
                         className="relative"
                     >
                         <div className="relative h-[34rem] w-full overflow-hidden rounded-3xl shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
-                            <Link href={`/en/doctors/${doctor.id}/image`} scroll={false}>
+                            <Link href={`/${lang}/doctors/${doctor.id}/image`} scroll={false}>
                                 <Image
                                     src={doctor.image_url}
                                     alt={doctor.full_name}
@@ -56,10 +75,9 @@ export default function DoctorDetailsPage() {
                                 />
                             </Link>
 
-                            {/* ⬇️ مهم */}
+                            {/* Gradient overlay */}
                             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                         </div>
-
 
                         {/* Image glow */}
                         <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-400/20 to-transparent opacity-0 hover:opacity-100 transition duration-700" />
@@ -77,21 +95,30 @@ export default function DoctorDetailsPage() {
                         </h1>
 
                         <p className="mt-3 text-sm uppercase tracking-widest text-cyan-300">
-                            Professional Doctor
+                            {lang === 'fa' ? 'پزشک حرفه‌ای' : 'Professional Doctor'}
                         </p>
 
                         <p className="mt-6 max-w-xl text-gray-300 leading-relaxed">
                             {doctor.bio}
                         </p>
 
-                        {/* Actions */}
-                        {/* Social & Contact Icons */}
-                        <DoctorSocialIcons
-                            phone={doctor.phone_number}
-                            instagram={doctor.instagram_url}
-                            facebook={doctor.facebook_url}
-                        />
+                        {/* 🔴 اینجا BookingSection را اضافه کن */}
+                        <div className="mt-8">
+                            <ModernBookingSection
+                                schedules={schedules}
+                                doctorId={doctor.id}
+                                doctorName={doctor.full_name}
+                            />
+                        </div>
 
+                        {/* Social Icons بعد از BookingSection */}
+                        <div className="mt-8">
+                            <DoctorSocialIcons
+                                phone={doctor.phone_number}
+                                instagram={doctor.instagram_url}
+                                facebook={doctor.facebook_url}
+                            />
+                        </div>
                     </motion.div>
                 </div>
             </motion.div>
