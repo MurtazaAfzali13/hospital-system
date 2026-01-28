@@ -11,6 +11,7 @@ import { I18nContext } from '@/context/I18nContext'
 
 // کامپوننت BookingSection که ساختیم را import کن
 import ModernBookingSection from '@/components/booking/ModernBookingSection'
+import FancySpinner from '@/components/ui/FancySpinner'
 
 export default function DoctorDetailsPage() {
     const { lang } = useContext(I18nContext)
@@ -34,9 +35,7 @@ export default function DoctorDetailsPage() {
 
     if (state.loading || !doctor) {
         return (
-            <div className="flex h-screen items-center justify-center text-gray-300">
-                Loading doctor details...
-            </div>
+           <FancySpinner text="Loading doctor details..." />
         )
     }
 

@@ -1,7 +1,9 @@
+// 📁 components/booking/TimeSlotGrid.tsx
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, CheckCircle, User, Lock, AlertCircle, Key } from "lucide-react";
+import { Clock, CheckCircle, User, Lock, AlertCircle, Key, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 type Schedule = {
   day_of_week: number;
@@ -25,6 +27,7 @@ type TimeSlotGridProps = {
   timeSlots: string[];
   selectedTime: string | null;
   bookedSlots: string[];
+  reservedSlots: string[]; // ✅ اضافه شدن reservedSlots
   appointments: Appointment[];
   currentUserPhone?: string;
   onTimeSelect: (time: string) => void;
@@ -38,6 +41,7 @@ export default function TimeSlotGrid({
   timeSlots,
   selectedTime,
   bookedSlots,
+  reservedSlots, // ✅ دریافت reservedSlots
   appointments,
   currentUserPhone,
   onTimeSelect,
@@ -45,6 +49,9 @@ export default function TimeSlotGrid({
   t
 }: TimeSlotGridProps) {
   
+  const [hoveredTime, setHoveredTime] = useState<string | null>(null);
+  const [loadingSlots, setLoadingSlots] = useState<Set<string>>(new Set());
+
   const formatDate = (date: Date): string => {
     if (isRTL) {
       const weekday = date.toLocaleDateString('fa-IR', { weekday: 'long' });
@@ -59,6 +66,7 @@ export default function TimeSlotGrid({
     }
   };
 
+  // ✅ بررسی اینکه آیا زمان متعلق به کاربر فعلی است
   const isBookedByCurrentUser = (time: string): boolean => {
     if (!currentUserPhone) return false;
     
@@ -70,6 +78,7 @@ export default function TimeSlotGrid({
     );
   };
 
+  // ✅ گرفتن اطلاعات نوبت کاربر فعلی
   const getCurrentUserAppointment = (time: string): Appointment | null => {
     if (!currentUserPhone) return null;
     
@@ -81,13 +90,29 @@ export default function TimeSlotGrid({
     ) || null;
   };
 
+  // ✅ بررسی اینکه آیا زمان توسط دیگران رزرو شده
   const isBookedByOthers = (time: string): boolean => {
     return bookedSlots.includes(time) && !isBookedByCurrentUser(time);
   };
 
+  // ✅ بررسی اینکه آیا زمان در حال رزرو است (reserved)
+  const isReserved = (time: string): boolean => {
+    return reservedSlots.includes(time) && !isBookedByCurrentUser(time) && !isBookedByOthers(time);
+  };
+
+  // ✅ بررسی اینکه آیا زمان در حال پردازش است (loading)
+  const isLoading = (time: string): boolean => {
+    return loadingSlots.has(time);
+  };
+
+  // ✅ گرفتن متن وضعیت زمان
   const getAppointmentStatusText = (time: string): string => {
     if (isBookedByCurrentUser(time)) {
       return t('booking.myAppointment') || "نوبت من";
+    }
+    
+    if (isReserved(time)) {
+      return t('booking.reserving') || "در حال رزرو...";
     }
     
     if (isBookedByOthers(time)) {
@@ -101,7 +126,7 @@ export default function TimeSlotGrid({
     return t('booking.available') || "خالی";
   };
 
-  // تابع برای گرفتن نام بیمار
+  // ✅ گرفتن نام بیمار برای زمان‌های رزرو شده
   const getBookedByInfo = (time: string): string => {
     const appointment = appointments.find(appt => appt.appointment_time === time);
     if (!appointment) return "";
@@ -114,6 +139,54 @@ export default function TimeSlotGrid({
     // نمایش نام اول بیمار
     const firstName = appointment.patient_name.split(' ')[0];
     return firstName || t('booking.anotherPatient') || "بیمار دیگر";
+  };
+
+  // ✅ handler برای کلیک روی زمان
+  const handleTimeClick = async (time: string) => {
+    if (isBookedByCurrentUser(time)) {
+      const myAppointment = getCurrentUserAppointment(time);
+      const code = myAppointment?.verification_code 
+        ? `${t('booking.code') || "کد"}: ${myAppointment.verification_code}` 
+        : '';
+      alert(
+        `${t('booking.myAppointmentDetail') || "این نوبت متعلق به شماست"}\n` +
+        `${t('booking.time') || "زمان"}: ${time}\n` +
+        code
+      );
+      return;
+    }
+    
+    if (isBookedByOthers(time)) {
+      alert(
+        `${t('booking.alreadyBooked') || "این زمان قبلاً رزرو شده است"}\n` +
+        `${t('booking.by') || "توسط"}: ${getBookedByInfo(time)}`
+      );
+      return;
+    }
+    
+    if (isReserved(time)) {
+      alert(
+        `${t('booking.reservedWarning') || "این زمان در حال رزرو توسط شخص دیگری است"}\n` +
+        `${t('booking.pleaseWait') || "لطفاً چند لحظه صبر کنید یا زمان دیگری انتخاب کنید"}`
+      );
+      return;
+    }
+    
+    // نشان دادن loading state
+    setLoadingSlots(prev => new Set([...prev, time]));
+    
+    try {
+      await onTimeSelect(time);
+    } finally {
+      // حذف loading state بعد از 500ms (برای جلوگیری از flicker)
+      setTimeout(() => {
+        setLoadingSlots(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(time);
+          return newSet;
+        });
+      }, 500);
+    }
   };
 
   if (!scheduleForDay) {
@@ -133,6 +206,7 @@ export default function TimeSlotGrid({
   if (timeSlots.length === 0) {
     // بررسی اینکه آیا هیچ زمان‌بندی وجود ندارد یا همه رزرو شده‌اند
     const hasAppointments = appointments.length > 0;
+    const hasReservedSlots = reservedSlots.length > 0;
     
     return (
       <div className="mb-8">
@@ -148,11 +222,27 @@ export default function TimeSlotGrid({
               : (t('booking.noAvailableSlots') || "هیچ زمانی برای رزرو وجود ندارد")
             }
           </p>
+          
+          {hasReservedSlots && (
+            <div className="mt-3 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-2 bg-amber-900/30 rounded-lg">
+                <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+                <span className="text-amber-300 text-sm">
+                  {reservedSlots.length} {t('booking.slotsReserving') || "زمان در حال رزرو"}
+                </span>
+              </div>
+            </div>
+          )}
+          
           <div className="mt-4 text-sm text-slate-500">
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded bg-gradient-to-br from-purple-600 to-indigo-500"></div>
                 <span>{t('booking.bookedSlots') || "رزرو شده"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-gradient-to-br from-amber-700 to-orange-700 animate-pulse"></div>
+                <span>{t('booking.reservingSlots') || "در حال رزرو"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-slate-500" />
@@ -171,50 +261,46 @@ export default function TimeSlotGrid({
         <Clock className="w-5 h-5 text-cyan-400" />
         {t('booking.availableSlots') || "زمان‌های موجود"} - {formatDate(selectedDate)}
         <span className="text-xs bg-slate-700/50 px-2 py-1 rounded-lg">
-          {bookedSlots.length} {t('booking.booked') || "رزرو شده"} / {timeSlots.length + bookedSlots.length} {t('booking.total') || "کل"}
+          {bookedSlots.length} {t('booking.booked') || "رزرو شده"} / {timeSlots.length + bookedSlots.length + reservedSlots.length} {t('booking.total') || "کل"}
         </span>
+        {reservedSlots.length > 0 && (
+          <span className="text-xs bg-amber-900/50 px-2 py-1 rounded-lg flex items-center gap-1">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            {reservedSlots.length} {t('booking.reserving') || "در حال رزرو"}
+          </span>
+        )}
       </h3>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {timeSlots.map((time) => {
           const isMyAppointment = isBookedByCurrentUser(time);
           const isBooked = isBookedByOthers(time);
+          const isReservedSlot = isReserved(time);
+          const isLoadingSlot = isLoading(time);
           const isSelected = selectedTime === time;
           const myAppointment = getCurrentUserAppointment(time);
           const bookedBy = getBookedByInfo(time);
           
+          const isDisabled = isBooked || isReservedSlot || isMyAppointment || isLoadingSlot;
+          
           return (
             <motion.button
               key={time}
-              whileHover={!isBooked && !isMyAppointment ? { scale: 1.05 } : {}}
-              whileTap={!isBooked && !isMyAppointment ? { scale: 0.95 } : {}}
-              onClick={() => {
-                if (isMyAppointment) {
-                  const code = myAppointment?.verification_code 
-                    ? `${t('booking.code') || "کد"}: ${myAppointment.verification_code}` 
-                    : '';
-                  alert(
-                    `${t('booking.myAppointmentDetail') || "این نوبت متعلق به شماست"}\n` +
-                    `${t('booking.time') || "زمان"}: ${time}\n` +
-                    code
-                  );
-                  return;
-                }
-                if (isBooked) {
-                  alert(
-                    `${t('booking.alreadyBooked') || "این زمان قبلاً رزرو شده است"}\n` +
-                    `${t('booking.by') || "توسط"}: ${bookedBy}`
-                  );
-                  return;
-                }
-                onTimeSelect(time);
-              }}
-              disabled={isBooked}
+              whileHover={!isDisabled ? { scale: 1.05 } : {}}
+              whileTap={!isDisabled ? { scale: 0.95 } : {}}
+              onClick={() => handleTimeClick(time)}
+              onMouseEnter={() => !isDisabled && setHoveredTime(time)}
+              onMouseLeave={() => setHoveredTime(null)}
+              disabled={isDisabled}
               className={`
                 relative p-4 rounded-xl text-center transition-all duration-300
                 backdrop-blur-sm overflow-hidden group min-h-[100px]
-                ${isMyAppointment
+                ${isLoadingSlot
+                  ? 'bg-gradient-to-br from-cyan-700/60 to-blue-700/60 text-cyan-200 cursor-wait border border-cyan-600/50'
+                  : isMyAppointment
                   ? 'bg-gradient-to-br from-purple-600 to-indigo-500 text-white shadow-lg shadow-purple-500/20 border border-purple-500/50 cursor-pointer hover:shadow-purple-500/30'
+                  : isReservedSlot
+                  ? 'bg-gradient-to-br from-amber-700/60 to-orange-700/60 text-amber-200 cursor-wait border border-amber-600/50 animate-pulse'
                   : isBooked
                   ? 'bg-slate-800/60 text-slate-500 cursor-not-allowed border border-slate-700 opacity-80'
                   : isSelected
@@ -223,6 +309,13 @@ export default function TimeSlotGrid({
                 }
               `}
             >
+              {/* Loading Spinner */}
+              {isLoadingSlot && (
+                <div className="absolute inset-0 flex items-center justify-center bg-cyan-900/30 rounded-xl">
+                  <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+                </div>
+              )}
+              
               {/* کد رهگیری برای نوبت کاربر */}
               {isMyAppointment && myAppointment?.verification_code && (
                 <div className="absolute top-1 right-1">
@@ -234,12 +327,20 @@ export default function TimeSlotGrid({
               )}
               
               {/* زمان */}
-              <div className="text-lg font-bold mb-1">{time}</div>
+              <div className={`text-lg font-bold mb-1 ${
+                isLoadingSlot ? 'opacity-50' : ''
+              }`}>
+                {time}
+              </div>
               
               {/* آیکون وضعیت */}
               <div className="absolute top-2 left-2">
-                {isMyAppointment ? (
+                {isLoadingSlot ? (
+                  <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                ) : isMyAppointment ? (
                   <User className="w-4 h-4 text-purple-300" />
+                ) : isReservedSlot ? (
+                  <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
                 ) : isBooked ? (
                   <Lock className="w-4 h-4 text-slate-500" />
                 ) : null}
@@ -248,9 +349,10 @@ export default function TimeSlotGrid({
               {/* متن وضعیت */}
               <div className={`text-xs font-medium mt-2 ${
                 isMyAppointment ? 'text-purple-200' : 
+                isReservedSlot ? 'text-amber-300' :
                 isBooked ? 'text-slate-400' : 
                 isSelected ? 'text-emerald-200' : 'text-slate-400'
-              }`}>
+              } ${isLoadingSlot ? 'opacity-50' : ''}`}>
                 {getAppointmentStatusText(time)}
                 
                 {/* اطلاعات اضافی */}
@@ -265,27 +367,49 @@ export default function TimeSlotGrid({
                     {t('booking.by') || "توسط"}: {bookedBy}
                   </div>
                 )}
+                
+                {isReservedSlot && (
+                  <div className="mt-1 text-[10px] text-amber-400 animate-pulse">
+                    {t('booking.pleaseWait') || "لطفاً صبر کنید..."}
+                  </div>
+                )}
               </div>
               
               {/* افکت برای نوبت کاربر */}
-              {isMyAppointment && (
+              {isMyAppointment && !isLoadingSlot && (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 rounded-xl" />
               )}
               
+              {/* افکت برای زمان‌های در حال رزرو */}
+              {isReservedSlot && !isLoadingSlot && (
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl flex items-center justify-center">
+                  <div className="absolute inset-0 bg-amber-900/10 animate-pulse rounded-xl" />
+                  <Lock className="w-8 h-8 text-amber-600/50" />
+                </div>
+              )}
+              
               {/* افکت قفل برای زمان‌های رزرو شده */}
-              {isBooked && !isMyAppointment && (
+              {isBooked && !isMyAppointment && !isLoadingSlot && (
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-800/30 to-slate-900/30 rounded-xl flex items-center justify-center">
                   <Lock className="w-8 h-8 text-slate-600/50" />
                 </div>
               )}
               
               {/* افکت انتخاب */}
-              {isSelected && !isBooked && !isMyAppointment && (
+              {isSelected && !isBooked && !isMyAppointment && !isReservedSlot && !isLoadingSlot && (
                 <motion.div
                   className="absolute inset-0 rounded-xl border-2 border-emerald-400/50"
                   initial={false}
                   animate={{ borderColor: "rgba(52, 211, 153, 0.5)" }}
                 />
+              )}
+              
+              {/* Tooltip on hover */}
+              {hoveredTime === time && !isDisabled && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg whitespace-nowrap z-10 shadow-lg border border-slate-700">
+                  {t('booking.clickToBook') || "برای رزرو کلیک کنید"}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 rotate-45 border-r border-b border-slate-700"></div>
+                </div>
               )}
             </motion.button>
           );
@@ -298,6 +422,11 @@ export default function TimeSlotGrid({
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-gradient-to-br from-purple-600 to-indigo-500"></div>
             <span>{t('booking.myAppointment') || "نوبت من"} ({t('booking.canView') || "مشاهده"})</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-amber-700 to-orange-700 animate-pulse"></div>
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>{t('booking.reserving') || "در حال رزرو"} ({t('booking.waiting') || "منتظر بمانید"})</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-slate-800/60 border border-slate-700"></div>
@@ -317,6 +446,16 @@ export default function TimeSlotGrid({
         <p className="text-slate-500 text-xs">
           {t('booking.slotHelp') || "زمان‌های رزرو شده قفل می‌شوند و قابل انتخاب مجدد نیستند."}
         </p>
+        
+        {/* توضیح برای reserved slots */}
+        {reservedSlots.length > 0 && (
+          <div className="mt-3 p-2 bg-amber-900/20 rounded-lg border border-amber-800/30">
+            <p className="text-amber-300 text-xs flex items-center gap-2">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              {t('booking.reservedInfo') || `${reservedSlots.length} زمان در حال رزرو هستند. این زمان‌ها ممکن است پس از ۵ دقیقه آزاد شوند اگر رزرو تکمیل نشود.`}
+            </p>
+          </div>
+        )}
         
         {/* توضیح برای کاربران لاگین کرده */}
         {currentUserPhone && (

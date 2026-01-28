@@ -1,8 +1,10 @@
+// 📁 components/booking/ModernBookingSection.tsx
 "use client";
 
 import { useState, useEffect, useMemo, useContext, useCallback } from "react";
 import { I18nContext } from "@/context/I18nContext";
-import { CalendarDays, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { BookingProvider, useBooking } from "@/context/BookingContext";
+import { CalendarDays, Loader2, AlertCircle, RefreshCw, Lock } from "lucide-react";
 import DateSelector from "./DateSelector";
 import TimeSlotGrid from "./TimeSlotGrid";
 import PatientRegistrationDialog from "./PatientRegistrationDialog";
@@ -36,7 +38,8 @@ const generateTimeSlots = (
   startTime: string,
   endTime: string,
   slotDuration: number,
-  bookedSlots: string[]
+  bookedSlots: string[],
+  reservedSlots: string[] // اضافه کردن reservedSlots
 ): string[] => {
   const slots: string[] = [];
   
@@ -61,8 +64,8 @@ const generateTimeSlots = (
   ) {
     const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
     
-    // فقط اضافه کن اگر قبلاً رزرو نشده باشد
-    if (!bookedSlots.includes(timeStr)) {
+    // فقط اضافه کن اگر قبلاً رزرو یا رزرو موقت نشده باشد
+    if (!bookedSlots.includes(timeStr) && !reservedSlots.includes(timeStr)) {
       slots.push(timeStr);
     }
     
@@ -92,7 +95,8 @@ const removeSeconds = (timeString: string): string => {
   return timeString;
 };
 
-export default function ModernBookingSection({
+// ==================== Inner Component ====================
+function ModernBookingSectionContent({
   schedules,
   doctorId,
   doctorName,
@@ -101,6 +105,15 @@ export default function ModernBookingSection({
   const { lang, t } = useContext(I18nContext);
   const isRTL = lang === 'fa';
   
+  // استفاده از Booking Context
+  const { 
+    state, 
+    reserveTimeSlot, 
+    confirmBooking,
+    cancelReservation,
+    dispatch
+  } = useBooking();
+  
   // State Management
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const today = new Date();
@@ -108,12 +121,27 @@ export default function ModernBookingSection({
     return today;
   });
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ اضافه کردن trigger برای رفرش
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // زمان‌های رزرو شده از context
+  const bookedSlots = Array.from(state.bookedSlots);
+  const reservedSlots = Array.from(state.reservedSlots);
+  
+  // ساخت appointments از timeSlots
+  const appointments = useMemo(() => {
+    return state.timeSlots
+      .filter(slot => slot.status === 'booked' || slot.status === 'mine')
+      .map(slot => ({
+        appointment_time: slot.time,
+        patient_name: slot.bookedBy || 'بیمار',
+        patient_phone: slot.patientPhone || '',
+        verification_code: slot.verificationCode,
+        status: slot.status === 'mine' ? 'confirmed' : 'booked'
+      }));
+  }, [state.timeSlots]);
 
   // Available Dates (امروز تا ۷ روز آینده)
   const availableDates = useMemo(() => {
@@ -136,7 +164,7 @@ export default function ModernBookingSection({
     return schedules.find(s => Number(s.day_of_week) === dayOfWeek);
   }, [selectedDate, schedules]);
 
-  // Fetch appointments data
+  // Fetch appointments data - بدون استفاده از hook داخلی
   const fetchAppointmentsData = useCallback(async () => {
     if (!doctorId) {
       console.log("❌ No doctorId provided");
@@ -170,55 +198,49 @@ export default function ModernBookingSection({
       if (Array.isArray(data)) {
         console.log("📊 Processing appointments array, length:", data.length);
         
-        // استخراج ساعت‌های رزرو شده (بدون ثانیه)
-        const bookedTimes = data
-          .filter((appt: any) => {
-            const hasValidStatus = appt.status === "confirmed" || appt.status === "pending";
-            return hasValidStatus;
-          })
-          .map((appointment: any) => {
-            return removeSeconds(appointment.appointment_time);
-          });
-        
-        console.log("📊 Final booked slots:", bookedTimes);
-        setBookedSlots(bookedTimes);
-        
-        // ذخیره اطلاعات کامل appointments
-        const fullAppointments: Appointment[] = data.map((appointment: any) => ({
-          appointment_time: removeSeconds(appointment.appointment_time),
-          patient_name: appointment.patient_name,
-          patient_phone: appointment.patient_phone,
-          verification_code: appointment.verification_code,
-          status: appointment.status || "confirmed"
-        }));
-        
-        console.log("📊 Full appointments:", fullAppointments);
-        setAppointments(fullAppointments);
+        // تبدیل داده‌های سرور به فرمتی که reducer می‌پذیرد
+        const serverData = data.map((appointment: any) => {
+          const time = appointment.appointment_time?.slice(0, 5) || '';
+          const isMine = currentUserPhone && appointment.patient_phone === currentUserPhone;
+          
+          return {
+            time,
+            appointment_time: time,
+            patient_name: appointment.patient_name,
+            patient_phone: appointment.patient_phone,
+            verification_code: appointment.verification_code,
+            status: isMine ? 'mine' : 'booked',
+            isMine: isMine
+          };
+        });
+
+        // آپدیت state با داده‌های جدید از سرور
+        dispatch({ type: 'UPDATE_FROM_SERVER', payload: serverData });
+
+        console.log("🔄 Updated time slots from server:", serverData.length);
       } else {
         throw new Error("Invalid response format");
       }
     } catch (err: any) {
       console.error("❌ Failed to fetch appointments:", err);
       setError(err.message || "خطا در دریافت اطلاعات");
-      setBookedSlots([]);
-      setAppointments([]);
     } finally {
       setLoading(false);
     }
-  }, [selectedDate, doctorId]);
+  }, [selectedDate, doctorId, currentUserPhone, dispatch]);
 
   useEffect(() => {
     console.log("🔁 useEffect triggered:", {
       selectedDate: selectedDate.toDateString(),
       doctorId,
       scheduleForDay,
-      refreshTrigger // ✅ اضافه شدن refreshTrigger
+      refreshTrigger
     });
     
     if (doctorId) {
       fetchAppointmentsData();
     }
-  }, [selectedDate, doctorId, refreshTrigger, fetchAppointmentsData]); // ✅ اضافه شدن refreshTrigger
+  }, [selectedDate, doctorId, refreshTrigger, fetchAppointmentsData]);
 
   // Generate time slots
   const timeSlots = useMemo(() => {
@@ -231,7 +253,8 @@ export default function ModernBookingSection({
       scheduleForDay.start_time,
       scheduleForDay.end_time,
       scheduleForDay.slot_duration || 30,
-      bookedSlots
+      bookedSlots,
+      reservedSlots
     );
 
     // Remove past times for today
@@ -249,10 +272,10 @@ export default function ModernBookingSection({
     }
 
     return slots;
-  }, [scheduleForDay, bookedSlots, selectedDate]);
+  }, [scheduleForDay, bookedSlots, reservedSlots, selectedDate]);
 
-  // Handle time slot selection
-  const handleTimeSelect = (time: string) => {
+  // تغییر handler انتخاب زمان
+  const handleTimeSelect = async (time: string) => {
     console.log("🖱️ Time selected:", time);
     
     // اگر این زمان متعلق به کاربر فعلی است
@@ -277,79 +300,74 @@ export default function ModernBookingSection({
       return;
     }
     
-    // اگر قبلاً توسط کس دیگری رزرو شده باشد
-    if (bookedSlots.includes(time)) {
-      const bookedAppointment = appointments.find(appt => appt.appointment_time === time);
-      alert(
-        `${t?.('booking.alreadyBooked') || "این زمان قبلاً رزرو شده است."}\n` +
-        (bookedAppointment?.patient_name ? `توسط: ${bookedAppointment.patient_name}` : "")
-      );
+    // 1. رزرو موقت در frontend و backend
+    const reserved = await reserveTimeSlot(time);
+    
+    if (!reserved) {
+      alert(t?.('booking.slotTaken') || "این زمان در دسترس نیست. ممکن است شخص دیگری در حال رزرو آن باشد.");
       return;
     }
     
+    // 2. باز کردن dialog ثبت اطلاعات
     setSelectedTime(time);
     setShowDialog(true);
   };
 
-  // Handle dialog close
-  const handleDialogClose = () => {
-    setShowDialog(false);
-    setSelectedTime(null);
-  };
-
-  // ✅ **مهم: Handle booking success با auto-refresh**
+  // تغییر handler موفقیت رزرو
   const handleBookingSuccess = useCallback((newAppointment: any) => {
     console.log("🎉 Booking success callback:", newAppointment);
     
-    // تبدیل زمان به فرمت بدون ثانیه
-    const appointmentTime = removeSeconds(newAppointment.time || newAppointment.appointment_time);
+    const appointmentTime = newAppointment.time?.slice(0, 5) || newAppointment.appointment_time?.slice(0, 5) || '';
     
-    console.log("🔄 Adding to state immediately:", {
-      time: appointmentTime,
-      phone: newAppointment.patient_phone,
-      code: newAppointment.verification_code
-    });
+    // 1. تأیید رزرو در context
+    confirmBooking(
+      appointmentTime,
+      newAppointment.patient_phone,
+      newAppointment.verification_code
+    );
     
-    // 1. اضافه کردن فوری به state برای نمایش سریع
-    const newAppointmentData: Appointment = {
-      appointment_time: appointmentTime,
-      patient_name: newAppointment.patient_name,
-      patient_phone: newAppointment.patient_phone,
-      verification_code: newAppointment.verification_code,
-      status: newAppointment.status || "confirmed"
-    };
-    
-    setBookedSlots(prev => {
-      const newSlots = [...prev, appointmentTime];
-      console.log("🔒 Booked slots updated:", newSlots);
-      return newSlots;
-    });
-    
-    setAppointments(prev => {
-      const newAppointments = [...prev, newAppointmentData];
-      console.log("📋 Appointments updated:", newAppointments);
-      return newAppointments;
-    });
-    
-    // 2. رفرش دستی داده‌ها از سرور
-    console.log("🔄 Manual refresh triggered");
-    setRefreshTrigger(prev => prev + 1);
-    
-    // 3. بستن dialog و reset
+    // 2. بستن dialog
     setSelectedTime(null);
     setShowDialog(false);
     
+    // 3. رفرش داده‌ها از سرور
+    setTimeout(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 500);
+    
     // 4. نمایش پیام موفقیت
     setTimeout(() => {
-      alert(t?.('booking.refreshSuccess') || "نوبت با موفقیت ثبت شد! لیست ساعت‌ها به‌روز شد.");
+      alert(t?.('booking.success') || "نوبت با موفقیت ثبت شد!");
     }, 300);
     
-  }, [t]);
+  }, [confirmBooking, t]);
+
+  // اگر کاربر از رزرو منصرف شد
+  const handleDialogClose = () => {
+    if (selectedTime) {
+      // آزاد کردن lock از backend
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      fetch(`/api/doctors/${doctorId}/check-slot?date=${dateStr}&time=${selectedTime}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'release', userId: 'user-' + Date.now() })
+      }).catch(console.error);
+      
+      // آزاد کردن در context
+      cancelReservation(selectedTime);
+    }
+    setShowDialog(false);
+    setSelectedTime(null);
+  };
 
   // Handle date change
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setSelectedTime(null);
+    setShowDialog(false);
+    
+    // آپدیت تاریخ در context
+    dispatch({ type: 'SET_DATE', payload: date });
   };
 
   // Force refresh button for debugging
@@ -379,21 +397,27 @@ export default function ModernBookingSection({
               <RefreshCw className="w-3 h-3" />
               {t?.('booking.refresh') || "رفرش"}
             </button>
+            <div className="text-xs text-slate-400">
+              Lockها: <span className="text-amber-300">{reservedSlots.length}</span>
+            </div>
           </div>
         </div>
         <div className="text-xs text-slate-400 space-y-1">
           <div className="grid grid-cols-2 gap-2">
             <div>تاریخ: {selectedDate.toLocaleDateString('fa-IR')}</div>
-            <div>زمان‌های رزرو شده: <span className="text-red-300">{bookedSlots.length}</span></div>
-            <div>زمان‌های موجود: <span className="text-green-300">{timeSlots.length}</span></div>
-            <div>کل نوبت‌ها: {appointments.length}</div>
+            <div>رزرو شده: <span className="text-red-300">{bookedSlots.length}</span></div>
+            <div>در حال رزرو: <span className="text-amber-300">{reservedSlots.length}</span></div>
+            <div>موجود: <span className="text-green-300">{timeSlots.length}</span></div>
           </div>
-          {bookedSlots.length > 0 && (
+          {reservedSlots.length > 0 && (
             <div className="mt-2 pt-2 border-t border-slate-700">
-              <div className="text-cyan-400 mb-1">ساعت‌های رزرو شده:</div>
+              <div className="text-amber-400 mb-1 flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                زمان‌های در حال رزرو:
+              </div>
               <div className="flex flex-wrap gap-1">
-                {bookedSlots.map((time, index) => (
-                  <span key={index} className="px-2 py-1 bg-red-900/30 rounded text-red-300">
+                {reservedSlots.map((time, index) => (
+                  <span key={index} className="px-2 py-1 bg-amber-900/30 rounded text-amber-300 animate-pulse">
                     {time}
                   </span>
                 ))}
@@ -464,6 +488,7 @@ export default function ModernBookingSection({
           timeSlots={timeSlots}
           selectedTime={selectedTime}
           bookedSlots={bookedSlots}
+          reservedSlots={reservedSlots} // ارسال reservedSlots به TimeSlotGrid
           appointments={appointments}
           currentUserPhone={currentUserPhone}
           onTimeSelect={handleTimeSelect}
@@ -486,5 +511,14 @@ export default function ModernBookingSection({
         currentUserPhone={currentUserPhone}
       />
     </div>
+  );
+}
+
+// ==================== Main Export with Provider ====================
+export default function ModernBookingSection(props: BookingSectionProps) {
+  return (
+    <BookingProvider doctorId={props.doctorId}>
+      <ModernBookingSectionContent {...props} />
+    </BookingProvider>
   );
 }

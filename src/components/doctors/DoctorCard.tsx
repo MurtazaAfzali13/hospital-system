@@ -46,7 +46,7 @@ export default function DoctorCard({ doctor }: { doctor: Doctor }) {
         </p>
 
         {/* Actions */}
-        <div className="p-5">
+        <div className="p-5 flex justify-end">
           <Link
             href={`/doctors/${doctor.id}`}
             className="
