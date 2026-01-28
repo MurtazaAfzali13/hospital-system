@@ -1,5 +1,7 @@
 {
-  "common": { "direction": "ltr" },
+  "common": {
+    "direction": "ltr"
+  },
   "login": {
     "title": "Login",
     "subtitle": "Enter your email and password",
@@ -20,7 +22,7 @@
     "alreadyHaveAccount": "Already have an account?",
     "login": "Login"
   },
-   "common_hero": {
+  "common_hero": {
     "direction": "ltr",
     "emergency": "Emergency",
     "emergencyContact": "(123) 456-7890",
@@ -60,7 +62,7 @@
     "leadingCenter": "Leading Medical Center",
     "home": "Home",
     "doctors": "Doctors",
-    "about":"About us",
+    "about": "About us",
     "departments": "Departments",
     "services": "Services",
     "login": "Login",
@@ -68,9 +70,9 @@
     "profile": "Profile",
     "logout": "Logout",
     "account": "Account",
-      "language": "Language"
+    "language": "Language"
   },
-   "footer": {
+  "footer": {
     "description": "Leading medical center providing world-class healthcare services with cutting-edge technology and compassionate care.",
     "quickLinks": "Quick Links",
     "medicalServices": "Medical Services",
@@ -101,10 +103,10 @@
     "sitemap": "Sitemap",
     "contactUs": "Contact Us"
   },
-  "search":{
-  "search_doctor_placeholder": "Search doctor name..."
-},
- "about": {
+  "search": {
+    "search_doctor_placeholder": "Search doctor name..."
+  },
+  "about": {
     "title": "About Us",
     "headline": {
       "part1": "Specialized Center",
@@ -175,7 +177,6 @@
       "appointment": "Book Appointment Online"
     }
   },
- 
   "booking": {
     "title": "Book Appointment",
     "doctor": "Dr.",
@@ -225,6 +226,63 @@
     "invalidPhone": "Invalid phone number (Example: 09123456789)",
     "connectionError": "Connection error with server",
     "requiredFields": "Please enter first and last name",
-    "error": "Error"
+    "error": "Error",
+    "validPhone": "Valid Phone",
+    "minimumDigits": "Et lest 9 charcter",
+    "myAppointment": "My Appointment",
+    "time": "Time",
+    "code": "Verification Code",
+    "alreadyBookedByYou": "You have already booked this slot.",
+    "cannotSelect": "This time cannot be selected. Please choose another time.",
+    "slotReserved": "This slot is currently being reserved",
+    "reservedWarning": "Someone else is registering for this slot",
+    "pleaseWait": "Please wait 5 minutes",
+    "autoRelease": "If the booking is not completed, this slot will be released automatically",
+    "refresh": "Refresh",
+    "loading": "Loading appointments...",
+    "fetchError": "Error fetching data",
+    "retry": "Retry",
+    "successTitle": "Appointment Booked Successfully!",
+    "successMessage": "Your appointment has been successfully booked",
+    "done": "Done"
+  },
+ "services": {
+  "title": "Comprehensive Medical Services",
+  "subtitle": "Combining Expert Knowledge and Modern Technology for Your Health",
+  "view_details": "View Details",
+  "close_details": "Close Details",
+  "items": {
+    "emergency": {
+      "title": "Emergency & Urgent Care",
+      "short": "24/7 Rapid Response",
+      "desc": "Our emergency unit is fully equipped with ground and air ambulances, advanced triage, and on-site emergency medicine specialists around the clock to save lives."
+    },
+    "cardiology": {
+      "title": "Cardiology Clinic",
+      "short": "Specialized Heart Care",
+      "desc": "Comprehensive services including echocardiography, angiography, stress tests, and cardiac rehabilitation under the supervision of the country's top cardiology experts."
+    },
+    "neurology": {
+      "title": "Neurology",
+      "short": "Treatment of Neurological Disorders",
+      "desc": "Accurate diagnosis and treatment of brain, spinal, and sleep disorders using advanced brain mapping devices and nerve-muscle monitoring equipment."
+    },
+    "laboratory": {
+      "title": "Pathology Laboratory",
+      "short": "Highly Accurate Lab Results",
+      "desc": "Equipped with fully automated robots for blood, genetic, and hormone tests with minimal error and fast online result delivery."
+    },
+    "pediatrics": {
+      "title": "Pediatrics",
+      "short": "A Safe Environment for Children",
+      "desc": "Monitoring child growth, vaccination, and treating pediatric diseases in a colorful and friendly space to reduce stress for your little ones."
+    },
+    "surgery": {
+      "title": "Advanced Surgery",
+      "short": "Minimally Invasive Technology",
+      "desc": "Smart operating rooms with antibacterial air filtration and minimally invasive surgical equipment to reduce patient recovery time."
+    }
   }
+}
+
 }

@@ -2,7 +2,7 @@
 import { createServerSupabaseClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-// این API برای lock کردن موقت زمان‌ها استفاده می‌شود
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -24,27 +24,58 @@ export async function POST(
 
     const supabase = await createServerSupabaseClient();
 
-    // ایجاد جدول locks اگر وجود ندارد
-    // این جدول برای lock کردن موقت زمان‌ها استفاده می‌شود
-    const { data: locks, error } = await supabase
+    // 1. اول بررسی کن آیا این زمان در appointments رزرو شده
+    const { data: existingAppointment, error: appointmentError } = await supabase
+      .from("appointments")
+      .select("id, patient_name, patient_phone")
+      .eq("doctor_id", doctorId)
+      .eq("appointment_date", date)
+      .eq("appointment_time", time + ':00') // اضافه کردن ثانیه
+      .in("status", ["pending", "confirmed"])
+      .maybeSingle();
+
+    if (appointmentError) {
+      console.error("Appointment check error:", appointmentError);
+      throw appointmentError;
+    }
+
+    // اگر نوبت قبلاً ثبت شده باشد
+    if (existingAppointment) {
+      return NextResponse.json({
+        success: false,
+        available: false,
+        error: "این زمان قبلاً رزرو شده است",
+        appointment: {
+          patient_name: existingAppointment.patient_name,
+          patient_phone: existingAppointment.patient_phone
+        },
+        code: "ALREADY_BOOKED"
+      });
+    }
+
+    // 2. بررسی lockهای فعال
+    const { data: locks, error: lockError } = await supabase
       .from("time_slot_locks")
       .select("*")
       .eq("doctor_id", doctorId)
       .eq("slot_date", date)
-      .eq("slot_time", time)
+      .eq("slot_time", time + ':00')
       .gt("expires_at", new Date().toISOString());
 
-    if (error) {
-      console.error("Lock check error:", error);
-      throw error;
+    if (lockError) {
+      console.error("Lock check error:", lockError);
+      throw lockError;
     }
 
     // اگر زمان قبلاً lock شده باشد
     if (locks && locks.length > 0) {
       return NextResponse.json({
+        success: false,
         available: false,
+        error: "این زمان در حال رزرو است",
         lockedBy: locks[0].locked_by,
-        expiresAt: locks[0].expires_at
+        expiresAt: locks[0].expires_at,
+        code: "ALREADY_RESERVED"
       });
     }
 
@@ -53,43 +84,68 @@ export async function POST(
       const lockId = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 دقیقه اعتبار
 
-      await supabase
+      const { error: insertError } = await supabase
         .from("time_slot_locks")
         .insert([{
           id: lockId,
           doctor_id: doctorId,
           slot_date: date,
-          slot_time: time,
-          locked_by: body.userId || 'anonymous',
+          slot_time: time + ':00',
+          locked_by: body.userId || body.sessionId || 'anonymous',
           expires_at: expiresAt.toISOString(),
           created_at: new Date().toISOString()
         }]);
 
+      if (insertError) {
+        console.error("Insert lock error:", insertError);
+        throw insertError;
+      }
+
       return NextResponse.json({
+        success: true,
         available: true,
         lockId,
-        expiresAt
+        expiresAt,
+        message: "زمان با موفقیت رزرو شد"
       });
     }
 
     // اگر action = 'release' باشد، lock را حذف کن
     if (action === 'release') {
-      await supabase
+      const { error: deleteError } = await supabase
         .from("time_slot_locks")
         .delete()
         .eq("doctor_id", doctorId)
         .eq("slot_date", date)
-        .eq("slot_time", time);
+        .eq("slot_time", time + ':00')
+        .eq("locked_by", body.userId || body.sessionId || 'anonymous');
 
-      return NextResponse.json({ released: true });
+      if (deleteError) {
+        console.error("Delete lock error:", deleteError);
+        throw deleteError;
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        released: true,
+        message: "رزرو آزاد شد"
+      });
     }
 
-    return NextResponse.json({ available: true });
+    return NextResponse.json({ 
+      success: true, 
+      available: true,
+      message: "زمان در دسترس است"
+    });
 
   } catch (err: any) {
     console.error("Slot check error:", err);
     return NextResponse.json(
-      { error: err.message || "Internal server error" },
+      { 
+        success: false,
+        error: err.message || "Internal server error",
+        available: false
+      },
       { status: 500 }
     );
   }

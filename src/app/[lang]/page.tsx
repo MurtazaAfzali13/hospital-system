@@ -1,5 +1,6 @@
 
-// import HeroSection from '@/components/HeroSection';
+
+import ServicesSection from '@/components/ServicesSection';
 import dynamic from 'next/dynamic';
 const HeroSection=dynamic(() => import("@/components/HeroSection"))
 
@@ -11,6 +12,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
    <>
    
       <HeroSection />
+      <ServicesSection />
    </>
   );
 }

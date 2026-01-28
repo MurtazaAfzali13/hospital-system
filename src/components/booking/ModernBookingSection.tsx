@@ -42,33 +42,33 @@ const generateTimeSlots = (
   reservedSlots: string[] // اضافه کردن reservedSlots
 ): string[] => {
   const slots: string[] = [];
-  
+
   // فرمت زمان: HH:MM یا HH:MM:SS را به HH:MM تبدیل کن
   const formatTime = (time: string) => {
     if (!time) return '00:00';
     return time.includes(':') ? time.slice(0, 5) : time;
   };
-  
+
   const formattedStart = formatTime(startTime);
   const formattedEnd = formatTime(endTime);
-  
+
   const [startHour, startMinute] = formattedStart.split(":").map(Number);
   const [endHour, endMinute] = formattedEnd.split(":").map(Number);
-  
+
   let currentHour = startHour;
   let currentMinute = startMinute;
-  
+
   while (
-    currentHour < endHour || 
+    currentHour < endHour ||
     (currentHour === endHour && currentMinute < endMinute)
   ) {
     const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-    
+
     // فقط اضافه کن اگر قبلاً رزرو یا رزرو موقت نشده باشد
     if (!bookedSlots.includes(timeStr) && !reservedSlots.includes(timeStr)) {
       slots.push(timeStr);
     }
-    
+
     // اضافه کردن مدت زمان اسلات
     currentMinute += slotDuration;
     if (currentMinute >= 60) {
@@ -76,7 +76,7 @@ const generateTimeSlots = (
       currentMinute = currentMinute % 60;
     }
   }
-  
+
   return slots;
 };
 
@@ -85,13 +85,13 @@ const removeSeconds = (timeString: string): string => {
   if (!timeString || typeof timeString !== 'string') {
     return '';
   }
-  
+
   // اگر زمان شامل ثانیه باشد (HH:MM:SS) آن را به HH:MM تبدیل کن
   const parts = timeString.split(':');
   if (parts.length >= 2) {
     return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
   }
-  
+
   return timeString;
 };
 
@@ -104,16 +104,16 @@ function ModernBookingSectionContent({
 }: BookingSectionProps) {
   const { lang, t } = useContext(I18nContext);
   const isRTL = lang === 'fa';
-  
+
   // استفاده از Booking Context
-  const { 
-    state, 
-    reserveTimeSlot, 
+  const {
+    state,
+    reserveTimeSlot,
     confirmBooking,
     cancelReservation,
     dispatch
   } = useBooking();
-  
+
   // State Management
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const today = new Date();
@@ -129,7 +129,7 @@ function ModernBookingSectionContent({
   // زمان‌های رزرو شده از context
   const bookedSlots = Array.from(state.bookedSlots);
   const reservedSlots = Array.from(state.reservedSlots);
-  
+
   // ساخت appointments از timeSlots
   const appointments = useMemo(() => {
     return state.timeSlots
@@ -148,13 +148,13 @@ function ModernBookingSectionContent({
     const dates = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       dates.push(date);
     }
-    
+
     return dates;
   }, []);
 
@@ -180,13 +180,13 @@ function ModernBookingSectionContent({
         date: dateStr,
         url: `/api/doctors/${doctorId}/appointments?date=${dateStr}`
       });
-      
+
       const res = await fetch(
         `/api/doctors/${doctorId}/appointments?date=${dateStr}`
       );
 
       console.log("📡 API Response status:", res.status);
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || `Failed to fetch: ${res.status}`);
@@ -194,15 +194,15 @@ function ModernBookingSectionContent({
 
       const data = await res.json();
       console.log("📊 Raw API Data received:", data);
-      
+
       if (Array.isArray(data)) {
         console.log("📊 Processing appointments array, length:", data.length);
-        
+
         // تبدیل داده‌های سرور به فرمتی که reducer می‌پذیرد
         const serverData = data.map((appointment: any) => {
           const time = appointment.appointment_time?.slice(0, 5) || '';
           const isMine = currentUserPhone && appointment.patient_phone === currentUserPhone;
-          
+
           return {
             time,
             appointment_time: time,
@@ -236,7 +236,7 @@ function ModernBookingSectionContent({
       scheduleForDay,
       refreshTrigger
     });
-    
+
     if (doctorId) {
       fetchAppointmentsData();
     }
@@ -261,54 +261,135 @@ function ModernBookingSectionContent({
     if (selectedDate.toDateString() === new Date().toDateString()) {
       const now = new Date();
       const currentTime = now.getHours() * 60 + now.getMinutes();
-      
+
       const filteredSlots = slots.filter(time => {
         const [hours, minutes] = time.split(":").map(Number);
         const slotTime = hours * 60 + minutes;
         return slotTime > currentTime;
       });
-      
+
       return filteredSlots;
     }
 
     return slots;
   }, [scheduleForDay, bookedSlots, reservedSlots, selectedDate]);
 
-  // تغییر handler انتخاب زمان
+  // 📁 components/booking/ModernBookingSection.tsx
+  // در تابع handleTimeSelect:
+
+  // 📁 components/booking/ModernBookingSection.tsx
+  // در تابع handleTimeSelect:
+
   const handleTimeSelect = async (time: string) => {
     console.log("🖱️ Time selected:", time);
-    
+
     // اگر این زمان متعلق به کاربر فعلی است
     const isMyAppointment = appointments.some(
-      appt => 
-        appt.appointment_time === time && 
-        currentUserPhone && 
+      appt =>
+        appt.appointment_time === time &&
+        currentUserPhone &&
         appt.patient_phone === currentUserPhone
     );
-    
+
     if (isMyAppointment) {
       const myAppointment = appointments.find(
-        appt => 
-          appt.appointment_time === time && 
+        appt =>
+          appt.appointment_time === time &&
           appt.patient_phone === currentUserPhone
       );
-      
+
+      // استخراج نام و تخلص
+      const patientName = myAppointment?.patient_name || '';
+      const nameParts = patientName.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
       alert(
-        `${t?.('booking.alreadyBookedByYou') || "شما قبلاً این زمان را رزرو کرده‌اید."}\n` +
-        `کد رهگیری: ${myAppointment?.verification_code || 'ندارد'}`
+        `🏥 ${t?.('booking.myAppointment') || "نوبت من"}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 ${t?.('booking.patient') || "بیمار"}: ${patientName}\n` +
+        `📝 ${t?.('booking.firstName') || "نام"}: ${firstName}\n` +
+        `📝 ${t?.('booking.lastName') || "تخلص"}: ${lastName}\n` +
+        `📞 ${t?.('booking.phone') || "تلفن"}: ${myAppointment?.patient_phone || ''}\n` +
+        `⏰ ${t?.('booking.time') || "زمان"}: ${time}\n` +
+        `🔐 ${t?.('booking.code') || "کد رهگیری"}: ${myAppointment?.verification_code || 'ندارد'}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `✅ ${t?.('booking.alreadyBookedByYou') || "شما قبلاً این زمان را رزرو کرده‌اید."}`
       );
       return;
     }
-    
-    // 1. رزرو موقت در frontend و backend
-    const reserved = await reserveTimeSlot(time);
-    
-    if (!reserved) {
-      alert(t?.('booking.slotTaken') || "این زمان در دسترس نیست. ممکن است شخص دیگری در حال رزرو آن باشد.");
+
+    // اگر قبلاً توسط کس دیگری رزرو شده باشد
+    const isBookedByOthers = bookedSlots.includes(time);
+    if (isBookedByOthers) {
+      const bookedAppointment = appointments.find(appt => appt.appointment_time === time);
+      const patientName = bookedAppointment?.patient_name || t?.('booking.unknownPatient') || "بیمار ناشناس";
+
+      // استخراج نام و تخلص
+      const nameParts = patientName.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      alert(
+        `🔒 ${t?.('booking.slotBooked') || "زمان رزرو شده"}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 ${t?.('booking.bookedFor') || "رزرو شده برای"}: ${patientName}\n` +
+        `📝 ${t?.('booking.firstName') || "نام"}: ${firstName}\n` +
+        `📝 ${t?.('booking.lastName') || "تخلص"}: ${lastName}\n` +
+        `📞 ${t?.('booking.phone') || "تلفن"}: ${bookedAppointment?.patient_phone || ''}\n` +
+        `⏰ ${t?.('booking.time') || "زمان"}: ${time}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `⚠️ ${t?.('booking.cannotSelect') || "این زمان قابل انتخاب نیست. لطفاً زمان دیگری انتخاب کنید."}`
+      );
       return;
     }
-    
+
+    // 1. رزرو موقت در frontend و backend
+    console.log(`🔒 Attempting to reserve time slot: ${time}`);
+    const reserved = await reserveTimeSlot(time);
+
+    if (!reserved) {
+      // پیام دقیق‌تر بده که چرا رزرو نشد
+      const dateStr = selectedDate.toISOString().split('T')[0];
+
+      try {
+        // بررسی کن ببین آیا در سرور قفل شده
+        const checkResponse = await fetch(
+          `/api/doctors/${doctorId}/check-slot?date=${dateStr}&time=${time}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'check' })
+          }
+        );
+
+        if (checkResponse.ok) {
+          const result = await checkResponse.json();
+
+          if (result.code === "ALREADY_RESERVED") {
+            alert(
+              `⏳ ${t?.('booking.slotReserved') || "این زمان در حال رزرو است"}\n` +
+              `━━━━━━━━━━━━━━━━━━━━━━\n` +
+              `🚫 ${t?.('booking.reservedWarning') || "شخص دیگری در حال ثبت‌نام برای این زمان است"}\n` +
+              `⏰ ${t?.('booking.time') || "زمان"}: ${time}\n` +
+              `⏱️ ${t?.('booking.pleaseWait') || "لطفاً ۵ دقیقه صبر کنید"}\n` +
+              `━━━━━━━━━━━━━━━━━━━━━━\n` +
+              `🔄 ${t?.('booking.autoRelease') || "اگر رزرو تکمیل نشود، این زمان به طور خودکار آزاد می‌شود"}`
+            );
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking slot status:", error);
+      }
+
+      // پیام عمومی
+      alert(t?.('booking.slotTaken') || "این زمان در دسترس نیست. لطفاً زمان دیگری انتخاب کنید.");
+      return;
+    }
+
     // 2. باز کردن dialog ثبت اطلاعات
+    console.log(`✅ Time slot ${time} reserved successfully, opening dialog`);
     setSelectedTime(time);
     setShowDialog(true);
   };
@@ -316,30 +397,30 @@ function ModernBookingSectionContent({
   // تغییر handler موفقیت رزرو
   const handleBookingSuccess = useCallback((newAppointment: any) => {
     console.log("🎉 Booking success callback:", newAppointment);
-    
+
     const appointmentTime = newAppointment.time?.slice(0, 5) || newAppointment.appointment_time?.slice(0, 5) || '';
-    
+
     // 1. تأیید رزرو در context
     confirmBooking(
       appointmentTime,
       newAppointment.patient_phone,
       newAppointment.verification_code
     );
-    
+
     // 2. بستن dialog
     setSelectedTime(null);
     setShowDialog(false);
-    
+
     // 3. رفرش داده‌ها از سرور
     setTimeout(() => {
       setRefreshTrigger(prev => prev + 1);
     }, 500);
-    
+
     // 4. نمایش پیام موفقیت
     setTimeout(() => {
       alert(t?.('booking.success') || "نوبت با موفقیت ثبت شد!");
     }, 300);
-    
+
   }, [confirmBooking, t]);
 
   // اگر کاربر از رزرو منصرف شد
@@ -352,7 +433,7 @@ function ModernBookingSectionContent({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'release', userId: 'user-' + Date.now() })
       }).catch(console.error);
-      
+
       // آزاد کردن در context
       cancelReservation(selectedTime);
     }
@@ -365,7 +446,7 @@ function ModernBookingSectionContent({
     setSelectedDate(date);
     setSelectedTime(null);
     setShowDialog(false);
-    
+
     // آپدیت تاریخ در context
     dispatch({ type: 'SET_DATE', payload: date });
   };
@@ -442,7 +523,7 @@ function ModernBookingSectionContent({
             </p>
           </div>
         </div>
-        
+
         {/* نمایش خطا */}
         {error && (
           <div className="mb-4 p-3 bg-red-900/30 border border-red-800/50 rounded-lg">

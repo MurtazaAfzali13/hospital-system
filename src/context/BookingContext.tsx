@@ -47,7 +47,7 @@ const normalizeStatus = (status: string): TimeSlotStatus => {
 const normalizeTimeSlot = (data: any): TimeSlot => {
   const time = data.time || data.appointment_time || '';
   let status: TimeSlotStatus = 'available';
-  
+
   // تشخیص status بر اساس داده‌های موجود
   if (data.status === 'mine' || data.isMine) {
     status = 'mine';
@@ -56,7 +56,7 @@ const normalizeTimeSlot = (data: any): TimeSlot => {
   } else if (data.status === 'reserved') {
     status = 'reserved';
   }
-  
+
   return {
     time: time.length > 5 ? time.substring(0, 5) : time,
     status,
@@ -83,7 +83,7 @@ function bookingReducer(state: BookingState, action: BookingAction): BookingStat
   switch (action.type) {
     case 'SET_DATE':
       return { ...state, selectedDate: action.payload, timeSlots: [] };
-    
+
     case 'INIT_SLOTS':
       const bookedSlotsFromInit = new Set<string>(
         action.payload
@@ -96,7 +96,7 @@ function bookingReducer(state: BookingState, action: BookingAction): BookingStat
         bookedSlots: bookedSlotsFromInit,
         reservedSlots: new Set<string>()
       };
-    
+
     case 'RESERVE_SLOT':
       if (state.bookedSlots.has(action.payload) || state.reservedSlots.has(action.payload)) {
         return state;
@@ -108,7 +108,7 @@ function bookingReducer(state: BookingState, action: BookingAction): BookingStat
           slot.time === action.payload ? { ...slot, status: 'reserved' } : slot
         )
       };
-    
+
     case 'BOOK_SLOT':
       return {
         ...state,
@@ -119,15 +119,15 @@ function bookingReducer(state: BookingState, action: BookingAction): BookingStat
         timeSlots: state.timeSlots.map(slot =>
           slot.time === action.payload.time
             ? {
-                ...slot,
-                status: 'booked',
-                bookedBy: action.payload.patientPhone,
-                verificationCode: action.payload.verificationCode
-              }
+              ...slot,
+              status: 'booked',
+              bookedBy: action.payload.patientPhone,
+              verificationCode: action.payload.verificationCode
+            }
             : slot
         )
       };
-    
+
     case 'RELEASE_SLOT':
       return {
         ...state,
@@ -138,19 +138,19 @@ function bookingReducer(state: BookingState, action: BookingAction): BookingStat
           slot.time === action.payload ? { ...slot, status: 'available' } : slot
         )
       };
-    
+
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
-    
+
     case 'UPDATE_FROM_SERVER':
       const normalizedTimeSlots: TimeSlot[] = action.payload.map(normalizeTimeSlot);
-      
+
       const newBookedSlots = new Set<string>(
         normalizedTimeSlots
           .filter(s => s.status === 'booked' || s.status === 'mine')
           .map(s => s.time)
       );
-      
+
       return {
         ...state,
         timeSlots: normalizedTimeSlots,
@@ -159,19 +159,19 @@ function bookingReducer(state: BookingState, action: BookingAction): BookingStat
           Array.from(state.reservedSlots).filter(t => !newBookedSlots.has(t))
         )
       };
-    
+
     default:
       return state;
   }
 }
 
 // Provider Component
-export function BookingProvider({ 
-  children, 
-  doctorId 
-}: { 
-  children: ReactNode; 
-  doctorId: string; 
+export function BookingProvider({
+  children,
+  doctorId
+}: {
+  children: ReactNode;
+  doctorId: string;
 }) {
   const [state, dispatch] = useReducer(bookingReducer, {
     selectedDate: new Date(),
@@ -187,22 +187,41 @@ export function BookingProvider({
     return serverData.map(normalizeTimeSlot);
   }, []);
 
-  // رزرو موقت یک زمان
+  // 📁 context/BookingContext.tsx
+  // در تابع reserveTimeSlot:
+
   const reserveTimeSlot = async (time: string): Promise<boolean> => {
-    if (state.bookedSlots.has(time) || state.reservedSlots.has(time)) {
+    // فقط بررسی کن که قبلاً رزرو نشده باشد
+    // زمان‌های خالی نباید چک شوند!
+    if (state.bookedSlots.has(time)) {
+      console.log(`⛔ Time ${time} is already booked`);
       return false;
     }
 
+    // اگر در حال رزرو است (reserved) هم اجازه نده
+    if (state.reservedSlots.has(time)) {
+      console.log(`⏳ Time ${time} is already being reserved`);
+      return false;
+    }
+
+    // 1. رزرو موقت در frontend
     dispatch({ type: 'RESERVE_SLOT', payload: time });
 
+    // 2. چک نهایی با سرور (برای جلوگیری از race condition)
     try {
       const dateStr = state.selectedDate.toISOString().split('T')[0];
+      console.log(`🔒 Attempting to lock slot: ${dateStr} ${time}`);
+
       const response = await fetch(
         `/api/doctors/${doctorId}/check-slot?date=${dateStr}&time=${time}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'reserve', userId: 'user-' + Date.now() })
+          body: JSON.stringify({
+            action: 'reserve',
+            userId: 'user-' + Date.now(),
+            sessionId: 'session-' + Math.random().toString(36).substr(2, 9)
+          })
         }
       );
 
@@ -211,15 +230,19 @@ export function BookingProvider({
       }
 
       const result = await response.json();
-      
+
       if (!result.success) {
+        // اگر سرور گفت در دسترس نیست، رزرو را آزاد کن
+        console.log(`❌ Server rejected reservation for ${time}:`, result.error);
         dispatch({ type: 'RELEASE_SLOT', payload: time });
         return false;
       }
 
+      console.log(`✅ Successfully reserved slot: ${time}, lock expires at:`, result.expiresAt);
       return true;
     } catch (error) {
-      console.error('Reserve time slot error:', error);
+      console.error('❌ Reserve time slot error:', error);
+      // اگر خطا داشت، رزرو را آزاد کن
       dispatch({ type: 'RELEASE_SLOT', payload: time });
       return false;
     }
